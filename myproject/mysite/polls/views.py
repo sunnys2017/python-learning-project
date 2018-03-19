@@ -1,49 +1,28 @@
 from django.shortcuts import get_object_or_404, render
 from .models import Choice, Question
-from django.http import Http404
+#from django.http import Http404
 from django.http import HttpResponseRedirect, HttpResponse
-from django.template import loader
+#from django.template import loader
 from django.urls import reverse
+from django.views import generic
+
+class IndexView(generic.ListView):
+    template_name = 'polls/index.html'
+    context_object_name = 'latest_question_list'
+
+    def get_queryset(self):
+        """Return the last five published questions."""
+        return Question.objects.order_by('-pub_date')[:5]
 
 
-# Create your views here.
-def index(request):
-	latest_question_list = Question.objects.order_by('-pub_date')[:5]
-	context = {'latest_question_list': latest_question_list}
-	return render(request, 'polls/index.html', context)
-'''
-	#output = ', '.join([q.question_text for q in latest_question_list])
-	#return HttpResponse(output)
-	template = loader.get_template('polls/index.html')
-	#The context is a dictionary mapping template variable names to Python objects
-	context = {
-		'latest_question_list': latest_question_list,
-	}
-	return HttpResponse(template.render(context, request))
-'''
-def detail(request, question_id):
-	#return HttpResponse("You are looking at question %s." %question_id)
-	question = get_object_or_404(Question, pk=question_id)
-	return render(request, 'polls/detail.html', {'question': question})
-''' refactor to above code
-	try:
-		question = Question.objects.get(pk=question_id)
-	except Question.DoesNotExist:
-		raise Http404("Question does not exist")
-	return render(request, 'polls/detail.html', {'question': question})
-'''
-''' !!!good to know!!!
-Why do we use a helper function get_object_or_404() instead of automatically 
-catching the ObjectDoesNotExist exceptions at a higher level, or having the 
-model API raise Http404 instead of ObjectDoesNotExist?
-Because that would couple the model layer to the view layer. 
-One of the foremost design goals of Django is to maintain loose coupling. 
-'''
-def results(request, question_id):
-	#response = "you are looing at the results of question %s."
-	#return HttpResponse(response % question_id)
-	question = get_object_or_404(Question, pk=question_id)
-	return render(request, 'polls/results.html', {'question': question})
+class DetailView(generic.DetailView):
+    model = Question
+    template_name = 'polls/detail.html'
+
+
+class ResultsView(generic.DetailView):
+    model = Question
+    template_name = 'polls/results.html'
 
 def vote(request, question_id):
 	#return HttpResponse("you are voting on question %s." %question_id)
